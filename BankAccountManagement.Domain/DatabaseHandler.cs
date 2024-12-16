@@ -284,5 +284,29 @@ namespace BankAccountManagement.Domain
 			command.CommandText = "SELECT * FROM BankAccounts;";
 			return command.ExecuteReader(System.Data.CommandBehavior.CloseConnection);
 		}
+
+		public void UpdateBalance(string iban, decimal amount, bool isDeposit)
+		{
+			EnsureConnection();
+
+			using (var command = _sharedConnection.CreateCommand())
+			{
+				string query = isDeposit
+					? "UPDATE BankAccounts SET Balance = Balance + @Amount WHERE IBAN = @IBAN;"
+					: "UPDATE BankAccounts SET Balance = Balance - @Amount WHERE IBAN = @IBAN AND Balance >= @Amount;";
+
+				command.CommandText = query;
+				command.Parameters.AddWithValue("@Amount", amount);
+				command.Parameters.AddWithValue("@IBAN", iban);
+
+				int rowsAffected = command.ExecuteNonQuery();
+
+				if (rowsAffected == 0 && !isDeposit)
+				{
+					throw new Exception("Insufficient funds or IBAN does not exist.");
+				}
+			}
+		}
+
 	}
 }

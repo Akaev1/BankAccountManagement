@@ -24,10 +24,12 @@ namespace BankAccountManagement.ConsoleApp
 				Console.WriteLine("===== Customer Menu =====");
 				Console.WriteLine("1. View All IBAN Accounts");
 				Console.WriteLine("2. Add a New IBAN Account");
-				Console.WriteLine("3. Transfer Money Using IBAN");
-				Console.WriteLine("4. Delete an IBAN Account");
-				Console.WriteLine("5. Freeze/Unfreeze an IBAN Account");
-				Console.WriteLine("6. Logout");
+				Console.WriteLine("3. Deposit Money");
+				Console.WriteLine("4. Withdraw Money");
+				Console.WriteLine("5. Transfer Money Using IBAN");
+				Console.WriteLine("6. Delete an IBAN Account");
+				Console.WriteLine("7. Freeze/Unfreeze an IBAN Account");
+				Console.WriteLine("8. Logout");
 				Console.WriteLine("=========================");
 				Console.Write("Choose an option: ");
 
@@ -42,15 +44,21 @@ namespace BankAccountManagement.ConsoleApp
 							AddNewIBANAccount();
 							break;
 						case 3:
-							TransferMoneyUsingIBAN();
+							DepositMoney();
 							break;
 						case 4:
-							DeleteIBANAccount();
+							WithdrawMoney();
 							break;
 						case 5:
-							FreezeUnfreezeIBANAccount();
+							TransferMoneyUsingIBAN();
 							break;
 						case 6:
+							DeleteIBANAccount();
+							break;
+						case 7:
+							FreezeUnfreezeIBANAccount();
+							break;
+						case 8:
 							loggedIn = false;
 							break;
 						default:
@@ -65,116 +73,62 @@ namespace BankAccountManagement.ConsoleApp
 
 				if (loggedIn)
 				{
-					Console.WriteLine("Press Enter to continue...");
+					Console.WriteLine("\nPress Enter to continue...");
 					Console.ReadLine();
 				}
 			}
 		}
 
-		private void DeleteIBANAccount()
+		private void DepositMoney()
 		{
 			Console.Clear();
-			Console.WriteLine("===== Delete an IBAN Account =====");
-			Console.Write("Enter the IBAN to delete: ");
+			Console.WriteLine("===== Deposit Money =====");
+			Console.Write("Enter your IBAN: ");
 			string iban = Console.ReadLine();
 
-			try
+			Console.Write("Enter the amount to deposit: ");
+			if (decimal.TryParse(Console.ReadLine(), out decimal amount) && amount > 0)
 			{
-				var reader = _dbHandler.GetIBANAccountDetails(iban);
-				if (reader.Read())
+				try
 				{
-					int ownerId = Convert.ToInt32(reader["AccountHolderId"]);
-					reader.Close();
-
-					if (ownerId != _accountId)
-					{
-						Console.WriteLine("You can only delete your own IBAN accounts.");
-					}
-					else
-					{
-						_dbHandler.DeleteIBANAccount(iban);
-						Console.WriteLine("IBAN account deleted successfully.");
-					}
+					_dbHandler.UpdateBalance(iban, amount, true); // true for deposit
+					Console.WriteLine($"Successfully deposited {amount} to IBAN {iban}.");
 				}
-				else
+				catch (Exception ex)
 				{
-					Console.WriteLine($"The IBAN {iban} does not exist.");
+					Console.WriteLine($"Error: {ex.Message}");
 				}
 			}
-			catch (Exception ex)
+			else
 			{
-				Console.WriteLine($"Error: {ex.Message}");
+				Console.WriteLine("Invalid amount. Please enter a positive number.");
 			}
-
-			Console.WriteLine("Press Enter to return to the menu...");
-			Console.ReadLine();
 		}
 
-		private void FreezeUnfreezeIBANAccount()
+		private void WithdrawMoney()
 		{
 			Console.Clear();
-			Console.WriteLine("===== Freeze/Unfreeze an IBAN Account =====");
-			Console.Write("Enter the IBAN to check: ");
+			Console.WriteLine("===== Withdraw Money =====");
+			Console.Write("Enter your IBAN: ");
 			string iban = Console.ReadLine();
 
-			try
+			Console.Write("Enter the amount to withdraw: ");
+			if (decimal.TryParse(Console.ReadLine(), out decimal amount) && amount > 0)
 			{
-				var reader = _dbHandler.GetIBANAccountDetails(iban);
-				if (reader.Read())
+				try
 				{
-					int ownerId = Convert.ToInt32(reader["AccountHolderId"]);
-					bool isFrozen = Convert.ToBoolean(reader["Frozen"]);
-					string status = isFrozen ? "frozen" : "active";
-					reader.Close();
-
-					if (ownerId != _accountId)
-					{
-						Console.WriteLine("You can only freeze/unfreeze your own IBAN accounts.");
-					}
-					else
-					{
-						Console.WriteLine($"The IBAN {iban} is currently {status}.");
-
-						if (isFrozen)
-						{
-							Console.Write("Do you wish to Unfreeze this account? (YES/NO): ");
-						}
-						else
-						{
-							Console.Write("Do you wish to Freeze this account? (YES/NO): ");
-						}
-
-						string input = Console.ReadLine()?.Trim().ToUpper();
-
-						if (input == "YES")
-						{
-							bool freeze = !isFrozen;
-							_dbHandler.FreezeIBANAccount(iban, freeze);
-							string action = freeze ? "frozen" : "unfrozen";
-							Console.WriteLine($"IBAN {iban} has been successfully {action}.");
-						}
-						else if (input == "NO")
-						{
-							Console.WriteLine("No changes were made to the IBAN.");
-						}
-						else
-						{
-							Console.WriteLine("Invalid input. Please enter YES or NO.");
-						}
-					}
+					_dbHandler.UpdateBalance(iban, amount, false); // false for withdraw
+					Console.WriteLine($"Successfully withdrew {amount} from IBAN {iban}.");
 				}
-				else
+				catch (Exception ex)
 				{
-					Console.WriteLine($"The IBAN {iban} does not exist.");
+					Console.WriteLine($"Error: {ex.Message}");
 				}
 			}
-			catch (Exception ex)
+			else
 			{
-				Console.WriteLine($"Error: {ex.Message}");
+				Console.WriteLine("Invalid amount. Please enter a positive number.");
 			}
-
-			Console.WriteLine("Press Enter to return to the menu...");
-			Console.ReadLine();
 		}
 
 		private void ViewAllIBANAccounts()
@@ -195,7 +149,7 @@ namespace BankAccountManagement.ConsoleApp
 			{
 				Console.WriteLine($"Error: {ex.Message}");
 			}
-			Console.WriteLine("Press Enter to return to the menu...");
+			Console.WriteLine("\nPress Enter to return to the menu...");
 			Console.ReadLine();
 		}
 
@@ -214,15 +168,8 @@ namespace BankAccountManagement.ConsoleApp
 
 				try
 				{
-					if (_dbHandler.IsIBANExists(iban))
-					{
-						Console.WriteLine("IBAN already exists. Please choose a unique IBAN.");
-					}
-					else
-					{
-						_dbHandler.AddBankAccount(_accountId, iban, balance, accountType);
-						Console.WriteLine("New IBAN account added successfully.");
-					}
+					_dbHandler.AddBankAccount(_accountId, iban, balance, accountType);
+					Console.WriteLine("New IBAN account added successfully.");
 				}
 				catch (Exception ex)
 				{
@@ -233,9 +180,6 @@ namespace BankAccountManagement.ConsoleApp
 			{
 				Console.WriteLine("Invalid balance. Please try again.");
 			}
-
-			Console.WriteLine("Press Enter to return to the menu...");
-			Console.ReadLine();
 		}
 
 		private void TransferMoneyUsingIBAN()
@@ -265,8 +209,68 @@ namespace BankAccountManagement.ConsoleApp
 			{
 				Console.WriteLine("Invalid amount. Please try again.");
 			}
-			Console.WriteLine("Press Enter to return to the menu...");
-			Console.ReadLine();
+		}
+
+		private void FreezeUnfreezeIBANAccount()
+		{
+			Console.Clear();
+			Console.WriteLine("===== Freeze/Unfreeze an IBAN Account =====");
+			Console.Write("Enter the IBAN to check: ");
+			string iban = Console.ReadLine();
+
+			try
+			{
+				var reader = _dbHandler.GetIBANAccountDetails(iban);
+
+				if (reader.Read())
+				{
+					bool isFrozen = Convert.ToBoolean(reader["Frozen"]);
+					string status = isFrozen ? "frozen" : "active";
+
+					Console.WriteLine($"The IBAN {iban} is currently {status}.");
+
+					Console.Write("Do you wish to toggle this account's status? (YES/NO): ");
+					string input = Console.ReadLine()?.Trim().ToUpper();
+
+					if (input == "YES")
+					{
+						_dbHandler.FreezeIBANAccount(iban, !isFrozen);
+						Console.WriteLine($"IBAN {iban} status has been successfully updated.");
+					}
+					else
+					{
+						Console.WriteLine("No changes were made.");
+					}
+				}
+				else
+				{
+					Console.WriteLine($"The IBAN {iban} does not exist.");
+				}
+
+				reader.Close();
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error: {ex.Message}");
+			}
+		}
+
+		private void DeleteIBANAccount()
+		{
+			Console.Clear();
+			Console.WriteLine("===== Delete an IBAN Account =====");
+			Console.Write("Enter the IBAN to delete: ");
+			string iban = Console.ReadLine();
+
+			try
+			{
+				_dbHandler.DeleteIBANAccount(iban);
+				Console.WriteLine("IBAN account deleted successfully.");
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error: {ex.Message}");
+			}
 		}
 	}
 }
