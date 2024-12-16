@@ -22,8 +22,7 @@ namespace BankAccountManagement.ConsoleApp
 				Console.WriteLine("===== Welcome to Bank Account Management System =====");
 				Console.WriteLine("1. Login");
 				Console.WriteLine("2. Create Account");
-				Console.WriteLine("3. Reset Database");
-				Console.WriteLine("4. Exit");
+				Console.WriteLine("3. Exit");
 				Console.WriteLine("======================================================");
 				Console.Write("Choose an option: ");
 
@@ -38,24 +37,19 @@ namespace BankAccountManagement.ConsoleApp
 							CreateAccountMenu();
 							break;
 						case 3:
-							ResetDatabaseMenu();
-							break;
-						case 4:
 							running = false;
 							break;
 						default:
 							Console.WriteLine("Invalid choice. Please try again.");
+							Console.WriteLine("Press Enter to continue...");
+							Console.ReadLine();
 							break;
 					}
 				}
 				else
 				{
 					Console.WriteLine("Invalid input. Please enter a number.");
-				}
-
-				if (running)
-				{
-					Console.WriteLine("\nPress Enter to continue...");
+					Console.WriteLine("Press Enter to continue...");
 					Console.ReadLine();
 				}
 			}
@@ -109,7 +103,7 @@ namespace BankAccountManagement.ConsoleApp
 				Console.WriteLine($"Error: {ex.Message}");
 			}
 
-			Console.WriteLine("\nPress Enter to return to the main menu...");
+			Console.WriteLine("Press Enter to return to the main menu...");
 			Console.ReadLine();
 		}
 
@@ -129,44 +123,22 @@ namespace BankAccountManagement.ConsoleApp
 
 			try
 			{
-				_dbHandler.AddAccount(name, password, role);
-				Console.WriteLine("Account created successfully!");
+				if (_dbHandler.IsAccountNameExists(name))
+				{
+					Console.WriteLine("Account with this name already exists. Please choose a different name.");
+				}
+				else
+				{
+					_dbHandler.AddAccount(name, password, role);
+					Console.WriteLine("Account created successfully!");
+				}
 			}
 			catch (Exception ex)
 			{
 				Console.WriteLine($"Error: {ex.Message}");
 			}
 
-			Console.WriteLine("\nPress Enter to return to the main menu...");
-			Console.ReadLine();
-		}
-
-		private void ResetDatabaseMenu()
-		{
-			Console.Clear();
-			Console.WriteLine("===== Reset Database =====");
-			Console.WriteLine("WARNING: This will delete all data and recreate the database.");
-			Console.Write("Type 'CONFIRM' to proceed: ");
-			string input = Console.ReadLine();
-
-			if (input?.ToUpper() == "CONFIRM")
-			{
-				try
-				{
-					_dbHandler.ResetDatabase();
-					Console.WriteLine("Database reset successfully.");
-				}
-				catch (Exception ex)
-				{
-					Console.WriteLine($"Error resetting database: {ex.Message}");
-				}
-			}
-			else
-			{
-				Console.WriteLine("Database reset cancelled.");
-			}
-
-			Console.WriteLine("\nPress Enter to return to the main menu...");
+			Console.WriteLine("Press Enter to return to the main menu...");
 			Console.ReadLine();
 		}
 	}

@@ -23,7 +23,8 @@ namespace BankAccountManagement.ConsoleApp
 				Console.WriteLine("1. View All Bank Accounts");
 				Console.WriteLine("2. Delete an IBAN Account");
 				Console.WriteLine("3. Freeze/Unfreeze an IBAN Account");
-				Console.WriteLine("4. Logout");
+				Console.WriteLine("4. Reset Database");
+				Console.WriteLine("5. Logout");
 				Console.WriteLine("===========================");
 				Console.Write("Choose an option: ");
 
@@ -41,6 +42,9 @@ namespace BankAccountManagement.ConsoleApp
 							FreezeUnfreezeIBANAccount();
 							break;
 						case 4:
+							ResetDatabase();
+							break;
+						case 5:
 							adminLoggedIn = false;
 							break;
 						default:
@@ -55,7 +59,7 @@ namespace BankAccountManagement.ConsoleApp
 
 				if (adminLoggedIn)
 				{
-					Console.WriteLine("\nPress Enter to continue...");
+					Console.WriteLine("Press Enter to continue...");
 					Console.ReadLine();
 				}
 			}
@@ -77,9 +81,6 @@ namespace BankAccountManagement.ConsoleApp
 			{
 				Console.WriteLine($"Error: {ex.Message}");
 			}
-
-			Console.WriteLine("\nPress Enter to return to the admin dashboard...");
-			Console.ReadLine();
 		}
 
 		private void FreezeUnfreezeIBANAccount()
@@ -113,7 +114,7 @@ namespace BankAccountManagement.ConsoleApp
 
 					if (input == "YES")
 					{
-						bool freeze = !isFrozen; 
+						bool freeze = !isFrozen;
 						_dbHandler.FreezeIBANAccount(iban, freeze);
 
 						string action = freeze ? "frozen" : "unfrozen";
@@ -139,13 +140,33 @@ namespace BankAccountManagement.ConsoleApp
 			{
 				Console.WriteLine($"Error: {ex.Message}");
 			}
-
-			Console.WriteLine("\nPress Enter to return to the menu...");
-			Console.ReadLine();
 		}
 
+		private void ResetDatabase()
+		{
+			Console.Clear();
+			Console.WriteLine("===== Reset Database =====");
+			Console.WriteLine("WARNING: This will delete all data and recreate the database.");
+			Console.Write("Type 'CONFIRM' to proceed: ");
+			string input = Console.ReadLine();
 
-
+			if (input?.ToUpper() == "CONFIRM")
+			{
+				try
+				{
+					_dbHandler.ResetDatabase();
+					Console.WriteLine("Database reset successfully.");
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"Error resetting database: {ex.Message}");
+				}
+			}
+			else
+			{
+				Console.WriteLine("Database reset cancelled.");
+			}
+		}
 
 		private void ViewAllBankAccounts()
 		{
@@ -166,88 +187,6 @@ namespace BankAccountManagement.ConsoleApp
 			{
 				Console.WriteLine($"Error: {ex.Message}");
 			}
-
-			Console.WriteLine("\nPress Enter to return to the Admin Dashboard...");
-			Console.ReadLine();
-		}
-
-		private void AddBankAccount()
-		{
-			Console.Clear();
-			Console.WriteLine("===== Add Bank Account =====");
-			Console.Write("Enter Account Holder ID: ");
-			if (int.TryParse(Console.ReadLine(), out int accountHolderId))
-			{
-				Console.Write("Enter IBAN: ");
-				string iban = Console.ReadLine();
-
-				Console.Write("Enter Initial Balance: ");
-				if (decimal.TryParse(Console.ReadLine(), out decimal balance))
-				{
-					Console.Write("Enter Account Type (Savings/Current): ");
-					string accountType = Console.ReadLine();
-
-					try
-					{
-						_dbHandler.AddBankAccount(accountHolderId, iban, balance, accountType);
-						Console.WriteLine("Bank account added successfully.");
-					}
-					catch (Exception ex)
-					{
-						Console.WriteLine($"Error: {ex.Message}");
-					}
-				}
-				else
-				{
-					Console.WriteLine("Invalid balance. Please try again.");
-				}
-			}
-			else
-			{
-				Console.WriteLine("Invalid Account Holder ID.");
-			}
-
-			Console.WriteLine("\nPress Enter to return to the Admin Dashboard...");
-			Console.ReadLine();
-		}
-
-		private void TransferMoney()
-		{
-			Console.Clear();
-			Console.WriteLine("===== Transfer Money =====");
-			Console.Write("Enter Sender's IBAN: ");
-			string fromIBAN = Console.ReadLine();
-
-			Console.Write("Enter Recipient's IBAN: ");
-			string toIBAN = Console.ReadLine();
-
-			Console.Write("Enter Transfer Amount: ");
-			if (decimal.TryParse(Console.ReadLine(), out decimal amount))
-			{
-				try
-				{
-					bool success = _dbHandler.TransferMoneyByIBAN(fromIBAN, toIBAN, amount);
-					if (success)
-					{
-						Console.WriteLine("Transfer successful!");
-					}
-					else
-					{
-						Console.WriteLine("Transfer failed. Please check details.");
-					}
-				}
-				catch (Exception ex)
-				{
-					Console.WriteLine($"Error: {ex.Message}");
-				}
-			}
-			else
-			{
-				Console.WriteLine("Invalid amount. Please try again.");
-			}
-
-			Console.WriteLine("\nPress Enter to return to the Admin Dashboard...");
-			Console.ReadLine();
 		}
 	}
 }

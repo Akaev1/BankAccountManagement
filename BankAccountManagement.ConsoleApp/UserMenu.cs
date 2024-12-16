@@ -65,7 +65,7 @@ namespace BankAccountManagement.ConsoleApp
 
 				if (loggedIn)
 				{
-					Console.WriteLine("\nPress Enter to continue...");
+					Console.WriteLine("Press Enter to continue...");
 					Console.ReadLine();
 				}
 			}
@@ -80,15 +80,33 @@ namespace BankAccountManagement.ConsoleApp
 
 			try
 			{
-				_dbHandler.DeleteIBANAccount(iban);
-				Console.WriteLine("IBAN account deleted successfully.");
+				var reader = _dbHandler.GetIBANAccountDetails(iban);
+				if (reader.Read())
+				{
+					int ownerId = Convert.ToInt32(reader["AccountHolderId"]);
+					reader.Close();
+
+					if (ownerId != _accountId)
+					{
+						Console.WriteLine("You can only delete your own IBAN accounts.");
+					}
+					else
+					{
+						_dbHandler.DeleteIBANAccount(iban);
+						Console.WriteLine("IBAN account deleted successfully.");
+					}
+				}
+				else
+				{
+					Console.WriteLine($"The IBAN {iban} does not exist.");
+				}
 			}
 			catch (Exception ex)
 			{
 				Console.WriteLine($"Error: {ex.Message}");
 			}
 
-			Console.WriteLine("\nPress Enter to return to the menu...");
+			Console.WriteLine("Press Enter to return to the menu...");
 			Console.ReadLine();
 		}
 
@@ -102,60 +120,62 @@ namespace BankAccountManagement.ConsoleApp
 			try
 			{
 				var reader = _dbHandler.GetIBANAccountDetails(iban);
-
-				if (reader.Read()) 
+				if (reader.Read())
 				{
+					int ownerId = Convert.ToInt32(reader["AccountHolderId"]);
 					bool isFrozen = Convert.ToBoolean(reader["Frozen"]);
 					string status = isFrozen ? "frozen" : "active";
+					reader.Close();
 
-					Console.WriteLine($"The IBAN {iban} is currently {status}.");
-
-					if (isFrozen)
+					if (ownerId != _accountId)
 					{
-						Console.Write("Do you wish to Unfreeze this account? (YES/NO): ");
+						Console.WriteLine("You can only freeze/unfreeze your own IBAN accounts.");
 					}
 					else
 					{
-						Console.Write("Do you wish to Freeze this account? (YES/NO): ");
-					}
+						Console.WriteLine($"The IBAN {iban} is currently {status}.");
 
-					string input = Console.ReadLine()?.Trim().ToUpper();
+						if (isFrozen)
+						{
+							Console.Write("Do you wish to Unfreeze this account? (YES/NO): ");
+						}
+						else
+						{
+							Console.Write("Do you wish to Freeze this account? (YES/NO): ");
+						}
 
-					if (input == "YES")
-					{
-						bool freeze = !isFrozen; 
-						_dbHandler.FreezeIBANAccount(iban, freeze);
+						string input = Console.ReadLine()?.Trim().ToUpper();
 
-						string action = freeze ? "frozen" : "unfrozen";
-						Console.WriteLine($"IBAN {iban} has been successfully {action}.");
-					}
-					else if (input == "NO")
-					{
-						Console.WriteLine("No changes were made to the IBAN.");
-					}
-					else
-					{
-						Console.WriteLine("Invalid input. Please enter YES or NO.");
+						if (input == "YES")
+						{
+							bool freeze = !isFrozen;
+							_dbHandler.FreezeIBANAccount(iban, freeze);
+							string action = freeze ? "frozen" : "unfrozen";
+							Console.WriteLine($"IBAN {iban} has been successfully {action}.");
+						}
+						else if (input == "NO")
+						{
+							Console.WriteLine("No changes were made to the IBAN.");
+						}
+						else
+						{
+							Console.WriteLine("Invalid input. Please enter YES or NO.");
+						}
 					}
 				}
 				else
 				{
 					Console.WriteLine($"The IBAN {iban} does not exist.");
 				}
-
-				reader.Close();
 			}
 			catch (Exception ex)
 			{
 				Console.WriteLine($"Error: {ex.Message}");
 			}
 
-			Console.WriteLine("\nPress Enter to return to the menu...");
+			Console.WriteLine("Press Enter to return to the menu...");
 			Console.ReadLine();
 		}
-
-
-
 
 		private void ViewAllIBANAccounts()
 		{
@@ -175,7 +195,7 @@ namespace BankAccountManagement.ConsoleApp
 			{
 				Console.WriteLine($"Error: {ex.Message}");
 			}
-			Console.WriteLine("\nPress Enter to return to the menu...");
+			Console.WriteLine("Press Enter to return to the menu...");
 			Console.ReadLine();
 		}
 
@@ -194,8 +214,15 @@ namespace BankAccountManagement.ConsoleApp
 
 				try
 				{
-					_dbHandler.AddBankAccount(_accountId, iban, balance, accountType);
-					Console.WriteLine("New IBAN account added successfully.");
+					if (_dbHandler.IsIBANExists(iban))
+					{
+						Console.WriteLine("IBAN already exists. Please choose a unique IBAN.");
+					}
+					else
+					{
+						_dbHandler.AddBankAccount(_accountId, iban, balance, accountType);
+						Console.WriteLine("New IBAN account added successfully.");
+					}
 				}
 				catch (Exception ex)
 				{
@@ -207,7 +234,7 @@ namespace BankAccountManagement.ConsoleApp
 				Console.WriteLine("Invalid balance. Please try again.");
 			}
 
-			Console.WriteLine("\nPress Enter to return to the menu...");
+			Console.WriteLine("Press Enter to return to the menu...");
 			Console.ReadLine();
 		}
 
@@ -238,7 +265,7 @@ namespace BankAccountManagement.ConsoleApp
 			{
 				Console.WriteLine("Invalid amount. Please try again.");
 			}
-			Console.WriteLine("\nPress Enter to return to the menu...");
+			Console.WriteLine("Press Enter to return to the menu...");
 			Console.ReadLine();
 		}
 	}

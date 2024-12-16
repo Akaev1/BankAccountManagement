@@ -8,7 +8,7 @@ namespace BankAccountManagement.Domain
 	{
 		private const string ConnectionString = "Data Source=BankDB.sqlite;Version=3;Cache=Shared;";
 		private static SQLiteConnection _sharedConnection;
-		private static readonly object ConnectionLock = new object(); 
+		private static readonly object ConnectionLock = new object();
 
 		public DatabaseHandler()
 		{
@@ -38,7 +38,7 @@ namespace BankAccountManagement.Domain
 			{
 				command.CommandText = @"CREATE TABLE IF NOT EXISTS Accounts (
                     AccountId INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Name TEXT NOT NULL,
+                    Name TEXT NOT NULL UNIQUE,
                     Password TEXT NOT NULL,
                     Role TEXT DEFAULT 'Customer',
                     CreatedDate TEXT NOT NULL
@@ -146,6 +146,30 @@ namespace BankAccountManagement.Domain
 			}
 		}
 
+		public bool IsAccountNameExists(string name)
+		{
+			EnsureConnection();
+			using (var command = _sharedConnection.CreateCommand())
+			{
+				command.CommandText = "SELECT COUNT(*) FROM Accounts WHERE Name = @Name;";
+				command.Parameters.AddWithValue("@Name", name);
+				long count = (long)command.ExecuteScalar();
+				return count > 0;
+			}
+		}
+
+		public bool IsIBANExists(string iban)
+		{
+			EnsureConnection();
+			using (var command = _sharedConnection.CreateCommand())
+			{
+				command.CommandText = "SELECT COUNT(*) FROM BankAccounts WHERE IBAN = @IBAN;";
+				command.Parameters.AddWithValue("@IBAN", iban);
+				long count = (long)command.ExecuteScalar();
+				return count > 0;
+			}
+		}
+
 		public SQLiteDataReader ValidateLogin(string name, string password)
 		{
 			EnsureConnection();
@@ -159,6 +183,11 @@ namespace BankAccountManagement.Domain
 		public void AddBankAccount(int accountHolderId, string iban, decimal balance, string accountType)
 		{
 			EnsureConnection();
+			if (IsIBANExists(iban))
+			{
+				throw new Exception("IBAN already exists. Please use a different IBAN.");
+			}
+
 			using (var command = _sharedConnection.CreateCommand())
 			{
 				command.CommandText = @"INSERT INTO BankAccounts (AccountHolderId, IBAN, Balance, AccountType, CreatedDate) 
