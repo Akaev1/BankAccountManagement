@@ -8,7 +8,7 @@ namespace BankAccountManagement.Domain
 	{
 		private const string ConnectionString = "Data Source=BankDB.sqlite;Version=3;Cache=Shared;";
 		private static SQLiteConnection _sharedConnection;
-		private static readonly object ConnectionLock = new object(); // Added for thread safety
+		private static readonly object ConnectionLock = new object(); 
 
 		public DatabaseHandler()
 		{
@@ -18,7 +18,7 @@ namespace BankAccountManagement.Domain
 
 		private void EnsureConnection()
 		{
-			lock (ConnectionLock) // Ensures thread safety
+			lock (ConnectionLock)
 			{
 				if (_sharedConnection == null)
 				{
@@ -190,7 +190,6 @@ namespace BankAccountManagement.Domain
 				{
 					try
 					{
-						// Check if sender's account is frozen
 						string checkSenderFrozen = "SELECT Frozen FROM BankAccounts WHERE IBAN = @IBAN;";
 						using (var command = new SQLiteCommand(checkSenderFrozen, connection, transaction))
 						{
@@ -200,7 +199,6 @@ namespace BankAccountManagement.Domain
 							if (Convert.ToBoolean(result)) throw new Exception("Sender's account is frozen.");
 						}
 
-						// Check if receiver's account is frozen
 						string checkReceiverFrozen = "SELECT Frozen FROM BankAccounts WHERE IBAN = @IBAN;";
 						using (var command = new SQLiteCommand(checkReceiverFrozen, connection, transaction))
 						{
@@ -210,7 +208,6 @@ namespace BankAccountManagement.Domain
 							if (Convert.ToBoolean(result)) throw new Exception("Receiver's account is frozen.");
 						}
 
-						// Get sender's balance
 						string getSenderBalance = "SELECT Balance FROM BankAccounts WHERE IBAN = @IBAN;";
 						decimal senderBalance;
 						using (var command = new SQLiteCommand(getSenderBalance, connection, transaction))
@@ -222,7 +219,6 @@ namespace BankAccountManagement.Domain
 
 						if (senderBalance < amount) throw new Exception("Insufficient funds.");
 
-						// Deduct from sender
 						string deductQuery = "UPDATE BankAccounts SET Balance = Balance - @Amount WHERE IBAN = @IBAN;";
 						using (var command = new SQLiteCommand(deductQuery, connection, transaction))
 						{
@@ -231,7 +227,6 @@ namespace BankAccountManagement.Domain
 							command.ExecuteNonQuery();
 						}
 
-						// Add to receiver
 						string addQuery = "UPDATE BankAccounts SET Balance = Balance + @Amount WHERE IBAN = @IBAN;";
 						using (var command = new SQLiteCommand(addQuery, connection, transaction))
 						{
@@ -240,7 +235,6 @@ namespace BankAccountManagement.Domain
 							command.ExecuteNonQuery();
 						}
 
-						// Commit transaction
 						transaction.Commit();
 						return true;
 					}

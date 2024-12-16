@@ -1,5 +1,4 @@
-﻿// AdminMenu.cs
-using System;
+﻿using System;
 using BankAccountManagement.Domain;
 
 namespace BankAccountManagement.ConsoleApp
@@ -94,7 +93,7 @@ namespace BankAccountManagement.ConsoleApp
 			{
 				var reader = _dbHandler.GetIBANAccountDetails(iban);
 
-				if (reader.Read()) // Check if the IBAN exists
+				if (reader.Read())
 				{
 					bool isFrozen = Convert.ToBoolean(reader["Frozen"]);
 					string status = isFrozen ? "frozen" : "active";
@@ -114,7 +113,7 @@ namespace BankAccountManagement.ConsoleApp
 
 					if (input == "YES")
 					{
-						bool freeze = !isFrozen; // Toggle freeze status
+						bool freeze = !isFrozen; 
 						_dbHandler.FreezeIBANAccount(iban, freeze);
 
 						string action = freeze ? "frozen" : "unfrozen";

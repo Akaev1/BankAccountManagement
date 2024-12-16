@@ -1,5 +1,4 @@
-﻿// Program.cs
-using System;
+﻿using System;
 using BankAccountManagement.Domain;
 
 namespace BankAccountManagement.ConsoleApp

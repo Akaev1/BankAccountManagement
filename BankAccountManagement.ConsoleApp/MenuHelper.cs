@@ -71,7 +71,6 @@ namespace BankAccountManagement.ConsoleApp
 			Console.Write("Enter your Password: ");
 			string password = Console.ReadLine();
 
-			// Hardcoded admin credentials
 			if (name == "admin" && password == "admin123")
 			{
 				Console.WriteLine("Welcome, Admin!");
